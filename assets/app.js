@@ -96,7 +96,6 @@
     const open = document.createElement('button'); open.className = 'task-open'; open.setAttribute('aria-label', '编辑：' + t.text); open.addEventListener('click', () => openEditor(q, t));
     const due = document.createElement('span'); updateDue(due, t); open.appendChild(due);
     const text = document.createElement('span'); text.className = 'task-title'; text.textContent = t.text; open.appendChild(text); content.appendChild(open);
-    if (t.images.length) { const images = document.createElement('div'); images.className = 'task-images'; t.images.slice(0, 3).forEach((file, index) => { const button = thumb(file, '查看附件图片 ' + (index + 1), () => showImages(t.images, index)); if (index === 2 && t.images.length > 3) { const more = document.createElement('span'); more.className = 'more-images'; more.textContent = '+' + (t.images.length - 2); button.appendChild(more); } images.appendChild(button); }); content.appendChild(images); }
     const front = document.createElement('div'); front.className = 'task-front'; front.append(check, content);
     swipeToDelete(row, front, t); return row;
   }
@@ -160,6 +159,11 @@
     } else { renderTimeline(); $('#timeline').scrollTop = timelineScroll; }
     const count = state.tasks.filter(t => !t.done).length;
     $('#summary').textContent = count ? count + ' 项待办' : '夫夫清单';
+    resizeTaskRows();
+  }
+  function resizeTaskRows() {
+    const body = $('#board .quad-body');
+    if (body && body.clientHeight) $('#board').style.setProperty('--task-row-height', Math.max(innerWidth >= 600 ? 84 : 76, body.clientHeight / 3.5) + 'px');
   }
   function rememberDraft() {
     if (draft) localStorage.setItem(key + '.draft', JSON.stringify({...draft, text: $('#task-text').value, quadrant: Number($('#task-quadrant').value), due: $('#task-due').value}));
@@ -301,6 +305,7 @@
   document.addEventListener('visibilitychange', () => { if (!document.hidden) render(); });
   setInterval(() => { if (document.hidden) return; if (renderedDay !== today()) { render(); return; } state.tasks.forEach(task => document.querySelectorAll('.task[data-id="' + task.id + '"] .due').forEach(element => updateDue(element, task))); }, 60000);
   render();
+  new ResizeObserver(resizeTaskRows).observe($('#board'));
   if (!readingFailed) {
     try { const saved = JSON.parse(localStorage.getItem(key + '.draft')); if (saved) { openEditor(saved.quadrant, saved.id ? saved : null, saved); if (native) setImporting(native.isPicking()); } }
     catch (error) { localStorage.removeItem(key + '.draft'); }

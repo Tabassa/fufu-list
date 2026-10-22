@@ -18,6 +18,7 @@ const path = require('node:path');
     const done = C.saveTask(state, {text, quadrant: 2}); C.toggleDone(state, done.id);
     C.saveTask(state, {text: '带图片的短待办', quadrant: 3, images: [image]});
     C.saveTask(state, {text: '复习', quadrant: 4, due: '2026-10-30'});
+    C.saveTask(state, {text: '取快递', quadrant: 1, due: '2026-10-30'});
     localStorage.setItem('fufu-list.v1', C.serialize(state));
   }, longText);
   await page.reload();
@@ -29,9 +30,19 @@ const path = require('node:path');
         const title = row.querySelector('.task-title'), rect = row.getBoundingClientRect();
         return {height: rect.height, titleHeight: title.getBoundingClientRect().height, lineHeight: parseFloat(getComputedStyle(title).lineHeight)};
       }));
-      assert.equal(metrics.length, 6);
+      assert.equal(metrics.length, 7);
       assert.ok(metrics.every(row => Math.abs(row.height - metrics[0].height) < .1), 'short/long/dated/undated/attached/completed rows have equal heights at ' + view + ' ' + viewport.width);
       assert.ok(metrics.every(row => row.titleHeight <= row.lineHeight * 2 + 1), 'overview text is at most two lines');
+      assert.equal(await page.locator('.task img').count(), 0, 'attachments are not rendered or loaded in either overview');
+      const fits = await page.locator('.task-open').evaluateAll(buttons => buttons.every(button => {
+        const due = button.querySelector('.due'), title = button.querySelector('.task-title');
+        return button.clientHeight + 1 >= due.getBoundingClientRect().height + parseFloat(getComputedStyle(due).marginBottom) + title.getBoundingClientRect().height;
+      }));
+      assert.ok(fits, 'date and both title lines fit in the compact row');
+      if (view === 'matrix' && viewport.width === 360) {
+        const capacity = await page.locator('.q1 .quad-body').evaluate(body => body.clientHeight / body.querySelector('.task').getBoundingClientRect().height);
+        assert.ok(capacity >= 3.2 && capacity <= 3.8, 'one normal phone quadrant shows about 3.5 tasks, got ' + capacity);
+      }
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth), viewport.width, 'no horizontal overflow');
       if (view === 'matrix' && viewport.width === 360) await page.screenshot({path: path.resolve(__dirname, '../qa/compact-tasks-phone.png')});
     }
@@ -79,10 +90,13 @@ const path = require('node:path');
   await page.locator('.task[data-id="2"] .task-open').click();
   assert.equal(await page.locator('#task-text').inputValue(), longText + '\n最后一行：完整保存。');
   await page.locator('#cancel').click();
-  await page.locator('.task[data-id="3"] .thumb-button').first().click();
-  assert.equal(await page.locator('#image-viewer').isVisible(), true, 'compact thumbnails still open all saved attachments');
+  await page.locator('.task[data-id="3"] .task-open').click();
+  assert.equal(await page.locator('#draft-images .thumb-button').count(), 3, 'all attachments are available inside details');
+  await page.locator('#draft-images .thumb-button').first().click();
+  assert.equal(await page.locator('#image-viewer').isVisible(), true, 'detail thumbnails open saved attachments');
   assert.match(await page.locator('#image-position').innerText(), /1\s*\/\s*3/);
   await page.locator('#close-viewer').click();
+  await page.locator('#cancel').click();
   await page.clock.runFor(60000);
   assert.equal(await page.locator('.task[data-id="1"] .due').innerText(), '未设日期');
   assert.deepEqual(errors, []);
