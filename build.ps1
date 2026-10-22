@@ -16,7 +16,7 @@ function Run-Checked([string]$Program, [string[]]$Arguments) {
 }
 
 Run-Checked (Join-Path $taskBuildTools 'aapt2.exe') @('compile','--dir',(Join-Path $taskProject 'res'),'-o',(Join-Path $taskBuild 'resources.zip'))
-Run-Checked (Join-Path $taskBuildTools 'aapt2.exe') @('link','-o',(Join-Path $taskBuild 'unsigned.apk'),'-I',$taskAndroidJar,'--manifest',(Join-Path $taskProject 'AndroidManifest.xml'),'--java',(Join-Path $taskBuild 'generated'),'-A',(Join-Path $taskProject 'assets'),(Join-Path $taskBuild 'resources.zip'),'--version-code','2','--version-name','1.0.1')
+Run-Checked (Join-Path $taskBuildTools 'aapt2.exe') @('link','-o',(Join-Path $taskBuild 'unsigned.apk'),'-I',$taskAndroidJar,'--manifest',(Join-Path $taskProject 'AndroidManifest.xml'),'--java',(Join-Path $taskBuild 'generated'),'-A',(Join-Path $taskProject 'assets'),(Join-Path $taskBuild 'resources.zip'),'--version-code','3','--version-name','1.0.2')
 $taskSources = @(Get-ChildItem -LiteralPath (Join-Path $taskProject 'src'),(Join-Path $taskBuild 'generated') -Recurse -Filter '*.java' | ForEach-Object { $_.FullName })
 Run-Checked (Join-Path $taskJava 'bin\javac.exe') (@('-J-Duser.language=en','-encoding','UTF-8','--release','8','-classpath',$taskAndroidJar,'-d',(Join-Path $taskBuild 'classes')) + $taskSources)
 $taskClasses = @(Get-ChildItem -LiteralPath (Join-Path $taskBuild 'classes') -Recurse -Filter '*.class' | ForEach-Object { $_.FullName })
@@ -29,6 +29,6 @@ if (!(Test-Path -LiteralPath $taskKeyFile)) {
     [IO.File]::WriteAllText($taskPasswordFile,[Convert]::ToBase64String([Security.Cryptography.RandomNumberGenerator]::GetBytes(24)))
     Run-Checked (Join-Path $taskJava 'bin\keytool.exe') @('-genkeypair','-keystore',$taskKeyFile,'-storepass:file',$taskPasswordFile,'-keypass:file',$taskPasswordFile,'-alias','fufu','-keyalg','RSA','-keysize','3072','-validity','10000','-dname','CN=Fufu List, OU=Personal App')
 }
-Run-Checked (Join-Path $taskBuildTools 'apksigner.bat') @('sign','--ks',$taskKeyFile,'--ks-pass',('file:' + $taskPasswordFile),'--out',(Join-Path $taskBuild 'fufu-list-1.0.1.apk'),(Join-Path $taskBuild 'aligned.apk'))
-Run-Checked (Join-Path $taskBuildTools 'apksigner.bat') @('verify','--verbose','--print-certs',(Join-Path $taskBuild 'fufu-list-1.0.1.apk'))
-Get-Item -LiteralPath (Join-Path $taskBuild 'fufu-list-1.0.1.apk') | Select-Object FullName,Length
+Run-Checked (Join-Path $taskBuildTools 'apksigner.bat') @('sign','--ks',$taskKeyFile,'--ks-pass',('file:' + $taskPasswordFile),'--out',(Join-Path $taskBuild 'fufu-list-1.0.2.apk'),(Join-Path $taskBuild 'aligned.apk'))
+Run-Checked (Join-Path $taskBuildTools 'apksigner.bat') @('verify','--verbose','--print-certs',(Join-Path $taskBuild 'fufu-list-1.0.2.apk'))
+Get-Item -LiteralPath (Join-Path $taskBuild 'fufu-list-1.0.2.apk') | Select-Object FullName,Length

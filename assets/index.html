@@ -8,6 +8,7 @@
   <title>夫夫清单</title>
   <link rel="stylesheet" href="style.css">
   <script defer src="core.js"></script>
+  <script defer src="deadline.js"></script>
   <script defer src="time.js"></script>
   <script defer src="calendar.js"></script>
   <script defer src="app.js"></script>
@@ -39,7 +40,8 @@
       <form id="task-form">
         <div class="sheet-body">
           <div class="text-card"><label class="field-label" for="task-text">待办内容</label>
-          <textarea id="task-text" placeholder="例如：电磁场作业，下周四交" rows="3" required></textarea></div>
+          <textarea id="task-text" placeholder="例如：下周五十三点交作业" rows="3" required></textarea>
+          <div id="date-recognition" class="date-recognition" role="status" hidden><span id="recognized-date-label"></span><button id="use-recognized-date" type="button" hidden>使用</button></div></div>
           <div class="property-card"><div class="field-row"><label for="open-priority">优先级</label><input id="task-quadrant" type="hidden" value="1"><button id="open-priority" class="priority-value" type="button" aria-haspopup="dialog">重要且紧急 ›</button></div></div>
           <div class="property-card"><div class="field-row"><label for="open-date">日期</label><div class="date-control"><input id="task-due" type="hidden"><button id="open-date" type="button">未设置 <span>›</span></button><button id="clear-date" type="button" class="clear-date" aria-label="清除截止日期" hidden>×</button></div></div></div>
           <div class="picture-card"><div class="picture-heading"><span class="field-label">图片</span><button id="add-images" type="button" class="text-button">＋ 添加图片</button></div>

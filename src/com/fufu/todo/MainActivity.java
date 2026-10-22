@@ -158,7 +158,7 @@ public class MainActivity extends Activity {
                     new FileInputStream(new File(images, name)));
             }
             String name = "/".equals(path) ? "index.html" : path.substring(1);
-            if (!name.matches("index\\.html|style\\.css|core\\.js|calendar\\.js|time\\.js|app\\.js|THIRD_PARTY_NOTICES\\.txt")) return missing();
+            if (!name.matches("index\\.html|style\\.css|core\\.js|deadline\\.js|calendar\\.js|time\\.js|app\\.js|THIRD_PARTY_NOTICES\\.txt")) return missing();
             String mime = name.endsWith("html") ? "text/html" : name.endsWith("css") ? "text/css"
                 : name.endsWith("js") ? "application/javascript" : "text/plain";
             return new WebResourceResponse(mime, "UTF-8", getAssets().open(name));

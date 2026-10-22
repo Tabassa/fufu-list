@@ -172,15 +172,34 @@
   function openEditor(q, task, recovered) {
     closeSwipe();
     draft = recovered || (task ? {...task, images: task.images.slice()} : {text: '', quadrant: q, due: '', time: '', images: []});
+    if (draft.dateManual === undefined) draft.dateManual = !!task || !!draft.due;
     $('#editor-title').textContent = task ? '编辑待办' : '添加待办'; $('#task-text').value = draft.text; $('#task-quadrant').value = draft.quadrant; $('#task-due').value = draft.due;
     $('#delete-task').hidden = !task; $('#form-error').hidden = true; $('#editor-layer').classList.toggle('editing', !!task); $('#editor-layer').hidden = false; updatePrioritySummary(); updateDateSummary(); renderDraftImages();
     rememberDraft();
+    updateRecognition();
     if (!task && !recovered) { $('#task-text').focus(); if (native) native.showKeyboard(); }
   }
   function updateDateSummary() {
     const due = $('#task-due').value;
     $('#open-date').textContent = due ? due.replace(/-/g, '/') + (draft.time ? ' ' + draft.time : '') + '  ›' : '未设置  ›';
     $('#clear-date').hidden = !due;
+  }
+  function updateRecognition() {
+    const result = draft.recognition;
+    $('#date-recognition').hidden = !result;
+    $('#use-recognized-date').hidden = !result || !!result.error || !draft.dateManual;
+    $('#recognized-date-label').textContent = !result ? '' : result.error || (draft.dateManual ? '文字日期：' : '已识别：') + result.due.replace(/-/g, '/') + (result.time ? ' ' + result.time : '') + (draft.dateManual ? '（保留手动设置）' : '');
+  }
+  function recognizeDeadline() {
+    if (!draft) return;
+    draft.recognition = window.FufuDeadline.parseDeadline($('#task-text').value);
+    if (!draft.dateManual) {
+      const result = draft.recognition;
+      $('#task-due').value = result && !result.error ? result.due : '';
+      draft.time = result && !result.error ? result.time : '';
+      updateDateSummary();
+    }
+    updateRecognition(); rememberDraft();
   }
   function updatePrioritySummary() {
     const q = Number($('#task-quadrant').value);
@@ -241,12 +260,15 @@
   $('#task-form').addEventListener('submit', e => {
     e.preventDefault();
     if (importing) return;
+    if (!draft.dateManual) recognizeDeadline();
     try { const next = C.deserialize(C.serialize(state)); C.saveTask(next, {...draft, text: $('#task-text').value, quadrant: Number($('#task-quadrant').value), due: $('#task-due').value}); commit(next); closeEditor(); }
     catch (error) { $('#form-error').textContent = error.message; $('#form-error').hidden = false; }
   });
-  $('#task-text').addEventListener('input', rememberDraft);
-  $('#open-date').addEventListener('click', () => { $('#task-text').blur(); if (native) native.hideKeyboard(); window.FufuCalendar.open($('#task-due').value, draft.time, (date, time) => { $('#task-due').value = date; draft.time = time; updateDateSummary(); rememberDraft(); }); });
-  $('#clear-date').addEventListener('click', () => { $('#task-due').value = ''; draft.time = ''; updateDateSummary(); rememberDraft(); });
+  $('#task-text').addEventListener('input', e => { if (e.isComposing) rememberDraft(); else recognizeDeadline(); });
+  $('#task-text').addEventListener('compositionend', recognizeDeadline);
+  $('#use-recognized-date').addEventListener('click', () => { draft.dateManual = false; recognizeDeadline(); });
+  $('#open-date').addEventListener('click', () => { $('#task-text').blur(); if (native) native.hideKeyboard(); window.FufuCalendar.open($('#task-due').value, draft.time, (date, time) => { $('#task-due').value = date; draft.time = time; draft.dateManual = true; updateDateSummary(); updateRecognition(); rememberDraft(); }); });
+  $('#clear-date').addEventListener('click', () => { $('#task-due').value = ''; draft.time = ''; draft.dateManual = true; updateDateSummary(); updateRecognition(); rememberDraft(); });
   $('#header-save').addEventListener('click', () => $('#task-form').requestSubmit());
   $('#cancel').addEventListener('click', closeEditor);
   $('#editor-layer').addEventListener('click', e => { if (e.target === $('#editor-layer')) closeEditor(); });
