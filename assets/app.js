@@ -85,8 +85,8 @@
   }
   function updateDue(element, task) {
     const now = new Date(), clock = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
-    element.className = 'due' + (!task.done && task.due <= today() ? ' urgent' : '');
-    element.textContent = C.dueLabel(task.due, today(), task.done, task.time, clock);
+    element.className = 'due' + (task.due && !task.done && task.due <= today() ? ' urgent' : '');
+    element.textContent = task.due ? C.dueLabel(task.due, today(), task.done, task.time, clock) : '未设日期';
   }
   function taskRow(t) {
     const q = t.quadrant, row = document.createElement('article'); row.className = 'task q' + q + (t.done ? ' done' : ''); row.dataset.id = t.id;
@@ -94,7 +94,7 @@
     const tick = document.createElement('span'); tick.textContent = '✓'; check.appendChild(tick); check.addEventListener('click', () => mutate(s => C.toggleDone(s, t.id)));
     const content = document.createElement('div'); content.className = 'task-content';
     const open = document.createElement('button'); open.className = 'task-open'; open.setAttribute('aria-label', '编辑：' + t.text); open.addEventListener('click', () => openEditor(q, t));
-    if (t.due) { const due = document.createElement('span'); updateDue(due, t); open.appendChild(due); }
+    const due = document.createElement('span'); updateDue(due, t); open.appendChild(due);
     const text = document.createElement('span'); text.className = 'task-title'; text.textContent = t.text; open.appendChild(text); content.appendChild(open);
     if (t.images.length) { const images = document.createElement('div'); images.className = 'task-images'; t.images.slice(0, 3).forEach((file, index) => { const button = thumb(file, '查看附件图片 ' + (index + 1), () => showImages(t.images, index)); if (index === 2 && t.images.length > 3) { const more = document.createElement('span'); more.className = 'more-images'; more.textContent = '+' + (t.images.length - 2); button.appendChild(more); } images.appendChild(button); }); content.appendChild(images); }
     const front = document.createElement('div'); front.className = 'task-front'; front.append(check, content);
@@ -169,6 +169,15 @@
     ['#save-task', '#header-save', '#delete-task', '#cancel', '#add-images'].forEach(id => { $(id).disabled = value; });
     $('#add-images').textContent = value ? '正在导入…' : '＋ 添加图片';
   }
+  function resizeTaskText() {
+    if (!draft) return;
+    const text = $('#task-text');
+    if (!$('#editor-layer').hidden && $('#editor-layer').classList.contains('editing')) {
+      const body = $('#editor .sheet-body'), scroll = body.scrollTop;
+      text.style.height = 'auto'; text.style.height = text.scrollHeight + 'px';
+      body.scrollTop = scroll;
+    } else text.style.height = '';
+  }
   function openEditor(q, task, recovered) {
     closeSwipe();
     draft = recovered || (task ? {...task, images: task.images.slice()} : {text: '', quadrant: q, due: '', time: '', images: []});
@@ -176,7 +185,7 @@
     $('#editor-title').textContent = task ? '编辑待办' : '添加待办'; $('#task-text').value = draft.text; $('#task-quadrant').value = draft.quadrant; $('#task-due').value = draft.due;
     $('#delete-task').hidden = !task; $('#form-error').hidden = true; $('#editor-layer').classList.toggle('editing', !!task); $('#editor-layer').hidden = false; updatePrioritySummary(); updateDateSummary(); renderDraftImages();
     rememberDraft();
-    updateRecognition();
+    updateRecognition(); resizeTaskText();
     if (!task && !recovered) { $('#task-text').focus(); if (native) native.showKeyboard(); }
   }
   function updateDateSummary() {
@@ -264,8 +273,9 @@
     try { const next = C.deserialize(C.serialize(state)); C.saveTask(next, {...draft, text: $('#task-text').value, quadrant: Number($('#task-quadrant').value), due: $('#task-due').value}); commit(next); closeEditor(); }
     catch (error) { $('#form-error').textContent = error.message; $('#form-error').hidden = false; }
   });
-  $('#task-text').addEventListener('input', e => { if (e.isComposing) rememberDraft(); else recognizeDeadline(); });
+  $('#task-text').addEventListener('input', e => { resizeTaskText(); if (e.isComposing) rememberDraft(); else recognizeDeadline(); });
   $('#task-text').addEventListener('compositionend', recognizeDeadline);
+  window.addEventListener('resize', resizeTaskText);
   $('#use-recognized-date').addEventListener('click', () => { draft.dateManual = false; recognizeDeadline(); });
   $('#open-date').addEventListener('click', () => { $('#task-text').blur(); if (native) native.hideKeyboard(); window.FufuCalendar.open($('#task-due').value, draft.time, (date, time) => { $('#task-due').value = date; draft.time = time; draft.dateManual = true; updateDateSummary(); updateRecognition(); rememberDraft(); }); });
   $('#clear-date').addEventListener('click', () => { $('#task-due').value = ''; draft.time = ''; draft.dateManual = true; updateDateSummary(); updateRecognition(); rememberDraft(); });
