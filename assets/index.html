@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'">
+  <title>夫夫清单</title>
+  <link rel="stylesheet" href="style.css">
+  <script defer src="core.js"></script>
+  <script defer src="calendar.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <main id="app">
+    <header class="page-header">
+      <div><h1>夫夫清单</h1><p id="summary">把事情放在合适的位置</p></div>
+      <div class="app-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+    </header>
+    <div id="notice" class="notice" role="alert" hidden></div>
+    <section id="board" class="board" aria-label="待办四象限"></section>
+  </main>
+
+  <div id="editor-layer" class="overlay" hidden>
+    <section id="editor" class="sheet" role="dialog" aria-modal="true" aria-labelledby="editor-title">
+      <div class="sheet-handle" aria-hidden="true"></div>
+      <div class="sheet-heading"><button id="cancel" class="icon-button close" aria-label="关闭编辑窗口">×</button><h2 id="editor-title">添加待办</h2><button id="header-save" type="button">保存</button></div>
+      <form id="task-form">
+        <div class="sheet-body">
+          <div class="text-card"><label class="field-label" for="task-text">待办内容</label>
+          <textarea id="task-text" placeholder="例如：电磁场作业，下周四交" rows="3" required></textarea></div>
+          <div class="property-card"><div class="field-row"><label for="task-quadrant">优先级</label><select id="task-quadrant">
+            <option value="1">重要且紧急</option><option value="2">重要不紧急</option><option value="3">不重要紧急</option><option value="4">不重要不紧急</option>
+          </select></div></div>
+          <div class="property-card"><div class="field-row"><label for="open-date">日期</label><div class="date-control"><input id="task-due" type="hidden"><button id="open-date" type="button">未设置 <span>›</span></button><button id="clear-date" type="button" class="clear-date" aria-label="清除截止日期" hidden>×</button></div></div></div>
+          <div class="picture-card"><div class="picture-heading"><span class="field-label">图片</span><button id="add-images" type="button" class="text-button">＋ 添加图片</button></div>
+          <div id="draft-images" class="draft-images"></div>
+          <input id="web-image-input" type="file" accept="image/*" multiple hidden></div>
+          <p id="form-error" class="form-error" role="alert" hidden></p>
+        </div>
+        <div class="sheet-footer"><button id="delete-task" class="delete-button" type="button" hidden>删除待办</button><button id="save-task" class="save-button" type="submit">保存</button></div>
+      </form>
+    </section>
+  </div>
+
+  <div id="calendar-layer" class="overlay calendar-overlay" hidden>
+    <section class="calendar-sheet" role="dialog" aria-modal="true" aria-label="选择截止日期和时间">
+      <div class="calendar-heading"><button id="previous-month" type="button" class="icon-button" aria-label="上个月">‹</button><h2 id="calendar-caption"></h2><button id="next-month" type="button" class="icon-button" aria-label="下个月">›</button></div>
+      <div class="weekdays" aria-hidden="true"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div>
+      <div id="calendar-days" class="calendar-days"></div>
+      <div class="calendar-time-row"><label for="calendar-time">具体时间 <small>可选</small></label><div><input id="calendar-time" type="time" step="60" aria-label="截止时间"><button id="clear-time" type="button" class="clear-date" aria-label="不设置具体时间">×</button></div></div>
+      <div class="calendar-footer"><button id="calendar-cancel" type="button">取消</button><button id="calendar-confirm" type="button" class="save-button">确定</button></div>
+    </section>
+  </div>
+
+  <div id="image-viewer" class="image-viewer" role="dialog" aria-modal="true" aria-label="图片预览" hidden>
+    <div class="viewer-header"><span id="image-position"></span><button id="close-viewer" class="icon-button" aria-label="关闭图片预览">×</button></div>
+    <div id="image-surface" class="image-surface"><img id="full-image" alt="待办附件大图" draggable="false"></div>
+    <div class="viewer-footer"><button id="previous-image" class="viewer-button" aria-label="上一张图片">‹</button><span>双指可缩放图片</span><button id="next-image" class="viewer-button" aria-label="下一张图片">›</button></div>
+  </div>
+</body>
+</html>

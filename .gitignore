@@ -1,0 +1,14 @@
+/build/
+/qa/
+/PLAN.md
+/progress.md
+/SPEC.md
+/node_modules/
+/toolchain/
+/fufu-signing/
+*.jks
+*.keystore
+*.idsig
+password.txt
+.env
+.env.*
