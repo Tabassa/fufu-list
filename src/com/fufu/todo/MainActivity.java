@@ -127,7 +127,7 @@ public class MainActivity extends Activity {
         web.setWebChromeClient(new WebChromeClient() {
             @Override public boolean onJsConfirm(WebView view, String url, String message, JsResult result) {
                 new AlertDialog.Builder(MainActivity.this).setMessage(message)
-                    .setPositiveButton("删除", (dialog, which) -> result.confirm())
+                    .setPositiveButton("确认删除", (dialog, which) -> result.confirm())
                     .setNegativeButton("取消", (dialog, which) -> result.cancel())
                     .setOnCancelListener(dialog -> result.cancel()).show();
                 return true;
@@ -158,7 +158,7 @@ public class MainActivity extends Activity {
                     new FileInputStream(new File(images, name)));
             }
             String name = "/".equals(path) ? "index.html" : path.substring(1);
-            if (!name.matches("index\\.html|style\\.css|core\\.js|calendar\\.js|app\\.js|THIRD_PARTY_NOTICES\\.txt")) return missing();
+            if (!name.matches("index\\.html|style\\.css|core\\.js|calendar\\.js|time\\.js|app\\.js|THIRD_PARTY_NOTICES\\.txt")) return missing();
             String mime = name.endsWith("html") ? "text/html" : name.endsWith("css") ? "text/css"
                 : name.endsWith("js") ? "application/javascript" : "text/plain";
             return new WebResourceResponse(mime, "UTF-8", getAssets().open(name));

@@ -77,3 +77,17 @@ test('precise deadline time survives persistence and appears on the task', () =>
   assert.equal(core.dueLabel('2026-10-22', '2026-10-22', false, '11:30', '12:00'), '今天 11:30 · 已逾期');
   assert.throws(() => core.saveTask(state, {text: '错误时间', quadrant: 1, due: '2026-10-22', time: '25:70'}), /时间/);
 });
+
+test('timeline orders all quadrants by deadline without changing their priority', () => {
+  const state = core.createState();
+  core.saveTask(state, {text: '无日期', quadrant: 1});
+  core.saveTask(state, {text: '下午', quadrant: 2, due: '2026-10-23', time: '18:30'});
+  core.saveTask(state, {text: '上午', quadrant: 4, due: '2026-10-23', time: '09:00'});
+  core.saveTask(state, {text: '更早', quadrant: 3, due: '2026-10-22', time: '20:00'});
+  const done = core.saveTask(state, {text: '已完成', quadrant: 1, due: '2026-10-01'});
+  core.toggleDone(state, done.id);
+  const raw = core.serialize(state);
+  assert.deepEqual(core.listTimeline(state).map(t => t.text), ['更早', '上午', '下午', '无日期', '已完成']);
+  assert.equal(core.serialize(state), raw);
+  assert.equal(core.listTimeline(state)[1].quadrant, 4);
+});

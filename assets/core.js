@@ -59,9 +59,10 @@
     const overdue = !done && (due < today || (due === today && time && clock && time < clock));
     return label + (overdue ? ' · 已逾期' : ' 截止');
   }
-  function listQuadrant(state, q) {
-    return state.tasks.filter(t => t.quadrant === q).sort((a, b) =>
-      Number(a.done) - Number(b.done) || ((a.due || '9999') + (a.time || '23:59')).localeCompare((b.due || '9999') + (b.time || '23:59')) || a.id - b.id);
+  function compareTasks(a, b) {
+    return Number(a.done) - Number(b.done) || ((a.due || '9999') + (a.time || '23:59')).localeCompare((b.due || '9999') + (b.time || '23:59')) || a.id - b.id;
   }
-  return {createState, saveTask, toggleDone, removeTask, serialize, deserialize, dueLabel, listQuadrant};
+  function listQuadrant(state, q) { return state.tasks.filter(t => t.quadrant === q).sort(compareTasks); }
+  function listTimeline(state) { return state.tasks.slice().sort(compareTasks); }
+  return {createState, saveTask, toggleDone, removeTask, serialize, deserialize, dueLabel, listQuadrant, listTimeline};
 });

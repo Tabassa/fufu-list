@@ -8,18 +8,29 @@
   <title>夫夫清单</title>
   <link rel="stylesheet" href="style.css">
   <script defer src="core.js"></script>
+  <script defer src="time.js"></script>
   <script defer src="calendar.js"></script>
   <script defer src="app.js"></script>
 </head>
 <body>
   <main id="app">
     <header class="page-header">
-      <div><h1>夫夫清单</h1><p id="summary">把事情放在合适的位置</p></div>
-      <div class="app-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      <button id="open-modes" class="app-mark" type="button" aria-label="切换展示模式" aria-haspopup="dialog"><i></i><i></i><i></i><i></i></button>
+      <div class="header-title"><h1 id="view-title">四象限模式</h1><p id="summary">夫夫清单</p></div>
+      <button id="new-task" class="header-add" type="button" aria-label="新增待办">＋</button>
     </header>
     <div id="notice" class="notice" role="alert" hidden></div>
     <section id="board" class="board" aria-label="待办四象限"></section>
+    <section id="timeline" class="timeline" aria-label="按截止时间排列的待办" hidden></section>
   </main>
+
+  <div id="mode-layer" class="overlay mode-overlay" hidden>
+    <section class="mode-panel" role="dialog" aria-modal="true" aria-labelledby="mode-title">
+      <div class="mode-heading"><h2 id="mode-title">展示模式</h2><button id="close-modes" class="icon-button" type="button" aria-label="关闭展示模式选择">×</button></div>
+      <button class="view-option" type="button" data-view="matrix"><span class="mode-grid-symbol" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span>四象限模式</span><span class="mode-check" aria-hidden="true">✓</span></button>
+      <button class="view-option" type="button" data-view="timeline"><span class="mode-line-symbol" aria-hidden="true">☷</span><span>时间轴模式</span><span class="mode-check" aria-hidden="true">✓</span></button>
+    </section>
+  </div>
 
   <div id="editor-layer" class="overlay" hidden>
     <section id="editor" class="sheet" role="dialog" aria-modal="true" aria-labelledby="editor-title">
@@ -29,9 +40,7 @@
         <div class="sheet-body">
           <div class="text-card"><label class="field-label" for="task-text">待办内容</label>
           <textarea id="task-text" placeholder="例如：电磁场作业，下周四交" rows="3" required></textarea></div>
-          <div class="property-card"><div class="field-row"><label for="task-quadrant">优先级</label><select id="task-quadrant">
-            <option value="1">重要且紧急</option><option value="2">重要不紧急</option><option value="3">不重要紧急</option><option value="4">不重要不紧急</option>
-          </select></div></div>
+          <div class="property-card"><div class="field-row"><label for="open-priority">优先级</label><input id="task-quadrant" type="hidden" value="1"><button id="open-priority" class="priority-value" type="button" aria-haspopup="dialog">重要且紧急 ›</button></div></div>
           <div class="property-card"><div class="field-row"><label for="open-date">日期</label><div class="date-control"><input id="task-due" type="hidden"><button id="open-date" type="button">未设置 <span>›</span></button><button id="clear-date" type="button" class="clear-date" aria-label="清除截止日期" hidden>×</button></div></div></div>
           <div class="picture-card"><div class="picture-heading"><span class="field-label">图片</span><button id="add-images" type="button" class="text-button">＋ 添加图片</button></div>
           <div id="draft-images" class="draft-images"></div>
@@ -43,13 +52,28 @@
     </section>
   </div>
 
+  <div id="priority-layer" class="overlay priority-overlay" hidden>
+    <section class="priority-sheet" role="dialog" aria-modal="true" aria-labelledby="priority-title">
+      <div class="priority-heading"><h2 id="priority-title">待办优先级</h2><button id="close-priority" type="button" class="icon-button" aria-label="关闭优先级选择">×</button></div>
+      <div id="priority-choices" class="priority-grid" role="radiogroup" aria-label="选择优先级"></div>
+    </section>
+  </div>
+
   <div id="calendar-layer" class="overlay calendar-overlay" hidden>
     <section class="calendar-sheet" role="dialog" aria-modal="true" aria-label="选择截止日期和时间">
       <div class="calendar-heading"><button id="previous-month" type="button" class="icon-button" aria-label="上个月">‹</button><h2 id="calendar-caption"></h2><button id="next-month" type="button" class="icon-button" aria-label="下个月">›</button></div>
       <div class="weekdays" aria-hidden="true"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div>
       <div id="calendar-days" class="calendar-days"></div>
-      <div class="calendar-time-row"><label for="calendar-time">具体时间 <small>可选</small></label><div><input id="calendar-time" type="time" step="60" aria-label="截止时间"><button id="clear-time" type="button" class="clear-date" aria-label="不设置具体时间">×</button></div></div>
+      <div class="calendar-time-row"><label for="open-time">具体时间 <small>可选</small></label><input id="calendar-time" type="hidden"><button id="open-time" type="button">未设置 ›</button></div>
       <div class="calendar-footer"><button id="calendar-cancel" type="button">取消</button><button id="calendar-confirm" type="button" class="save-button">确定</button></div>
+    </section>
+  </div>
+
+  <div id="time-layer" class="overlay time-overlay" hidden>
+    <section class="time-sheet" role="dialog" aria-modal="true" aria-labelledby="time-title">
+      <div class="time-heading"><button id="time-clear" type="button">清除</button><h2 id="time-title">截止时间</h2><span></span></div>
+      <div class="time-wheels"><div class="wheel-column"><span>小时</span><div id="hour-wheel" class="wheel-scroll" role="listbox" aria-label="小时"></div></div><div class="wheel-column"><span>分钟</span><div id="minute-wheel" class="wheel-scroll" role="listbox" aria-label="分钟"></div></div></div>
+      <div class="calendar-footer"><button id="time-cancel" type="button">取消</button><button id="time-confirm" type="button" class="save-button">确定</button></div>
     </section>
   </div>
 

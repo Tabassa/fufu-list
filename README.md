@@ -1,10 +1,10 @@
-# 夫夫清单 1.0.0
+# 夫夫清单 1.0.1
 
-供 Android 手机和平板使用的本地四象限清单。界面参考用户提供的原子清单截图，应用独立制作。
+供 Android 手机和平板使用的本地待办清单，支持四象限和时间轴。界面参考用户提供的原子清单截图，应用独立制作。
 
 ## 下载安装
 
-- [直接下载 1.0.0 安卓安装包](https://github.com/Tabassa/fufu-list/releases/download/v1.0.0/fufu-list-1.0.0.apk)
+- [直接下载 1.0.1 安卓安装包](https://github.com/Tabassa/fufu-list/releases/download/v1.0.1/fufu-list-1.0.1.apk)
 - [查看最新发布版本](https://github.com/Tabassa/fufu-list/releases/latest)
 
 手机或平板下载 APK 后打开安装，也可以先下载到电脑，再通过 QQ 发送至设备。不需要编译源码。
@@ -13,13 +13,15 @@
 
 <img src="docs/preview.png" alt="夫夫清单四象限界面，展示截止日期和具体时间" width="360">
 
+<img src="docs/timeline.png" alt="按截止日期和时间排列的时间轴" width="300"> <img src="docs/priority.png" alt="彩色四宫格优先级选择" width="300"> <img src="docs/time-wheel.png" alt="小时和分钟滚轮选择截止时间" width="300">
+
 ## 使用
 
-1. 将 `fufu-list-1.0.0.apk` 通过 QQ 发送到手机或平板，下载完整后点击安装。若系统要求授权，允许此次用于打开 APK 的 QQ 或文件管理器安装应用。
-2. 打开就是四象限。点击任一象限右上角「＋」新增，该象限自动成为默认优先级。
-3. 填写待办文字，可修改优先级；点击「日期」在月历上选择一天，可再设置小时和分钟，然后点「确定」和「保存」。日期与时间直接显示在四象限内。
+1. 将 `fufu-list-1.0.1.apk` 通过 QQ 发送到手机或平板，下载完整后点击安装。若系统要求授权，允许此次用于打开 APK 的 QQ 或文件管理器安装应用。
+2. 首次打开就是四象限。点击左上角四象限图标，在「展示模式」中切换四象限或时间轴。时间轴跨象限按截止日期和时间从近到远排列；未设日期和已完成的任务放在后面。
+3. 点击任一象限右上角「＋」新增，该象限自动成为默认优先级；右上角总「＋」也可直接新增。点击优先级会弹出彩色四宫格，选中后保存即可移动象限。点击「日期」在月历上选择一天，点击「具体时间」用小时、分钟两列滚轮选择，再点「确定」和「保存」。只有一个截止时间，日期与时间直接显示在任务中。
 4. 点击「添加图片」调用系统选择器，可附多张图片。缩略图可点开看大图，支持双指缩放；编辑页可移除附件。
-5. 点击事项文字进入全屏编辑页，点击圆圈完成或恢复待办。删除需要再次确认。
+5. 点击事项文字进入全屏编辑页，点击圆圈完成或恢复待办。也可以在四象限总览中按住事项从右往左滑，露出右侧删除键。点击删除后仍需点击「确认删除」；取消则保留待办。
 
 无需登录，不含广告；所有界面随安装包提供，不需要联网。任务和图片副本存放在本机应用私有目录。选入的图片会复制保存，后续移动原图不会影响已经保存的附件。
 
@@ -29,13 +31,13 @@
 
 ## 构建源码
 
-应用 ID：`com.fufu.todo`，版本：`1.0.0`。Java Activity 承载完全本地的 HTML/CSS/JS 页面，系统文档选择器负责导入图片，`AtomicFile` 保存任务 JSON。不申请网络和广泛相册权限。
+应用 ID：`com.fufu.todo`，版本：`1.0.1`。Java Activity 承载完全本地的 HTML/CSS/JS 页面，系统文档选择器负责导入图片，`AtomicFile` 保存任务 JSON。不申请网络和广泛相册权限。
 
 使用 Windows PowerShell 7、JDK 17、Android SDK Platform 35 / Build Tools 35.0.0。无需 Gradle 或在线依赖解析。将源码目录与以下 `toolchain` 目录并排放置：
 
 ```text
 work/
-    fufu-list/                 # 克隆或解压后的源码
+  fufu-list/                 # 克隆或解压后的源码
     build.ps1
   toolchain/
     jdk/bin/java.exe
@@ -43,11 +45,11 @@ work/
     sdk/build-tools/35.0.0/
 ```
 
-在源码目录运行 `./build.ps1`，生成 `build/fufu-list-1.0.0.apk`。第一次构建会在同级 `fufu-signing` 目录生成本地签名密钥。仓库不包含私钥、Android SDK、JDK 或用户数据。重新生成的密钥与 Releases 中 APK 的签名不同；覆盖升级须继续使用原签名密钥。
+在源码目录运行 `./build.ps1`，生成 `build/fufu-list-1.0.1.apk`。第一次构建会在同级 `fufu-signing` 目录生成本地签名密钥。仓库不包含私钥、Android SDK、JDK 或用户数据。重新生成的密钥与 Releases 中 APK 的签名不同；覆盖升级须继续使用原签名密钥。
 
 核心测试：`node --test tests/core.test.js`。
 
-浏览器检查需要安装 Playwright 并可运行 Edge。先在源码目录执行 `python -m http.server 8766 --bind 127.0.0.1 --directory assets`，再执行 `node tests/browser-check.js` 和 `node tests/lifecycle-check.js`。
+浏览器检查需要安装 Playwright 并可运行 Edge。先在源码目录执行 `python -m http.server 8766 --bind 127.0.0.1 --directory assets`，再依次执行 `node tests/browser-check.js`、`node tests/lifecycle-check.js`、`node tests/gestures-check.js`、`node tests/time-wheel-check.js` 和 `node tests/timeline-check.js`。
 
 ## 开源来源
 

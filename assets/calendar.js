@@ -20,17 +20,18 @@
     }
   }
   function close() { const open = !$('#calendar-layer').hidden; $('#calendar-layer').hidden = true; return open; }
+  function timeSummary() { $('#open-time').textContent = ($('#calendar-time').value || '未设置') + '  ›'; }
   window.FufuCalendar = {
     open(date, time, done) {
       const now = new Date(); selected = date || iso(now.getFullYear(), now.getMonth(), now.getDate());
       [year, month] = selected.split('-').map(Number); month--; callback = done;
-      $('#calendar-time').value = time || ''; $('#calendar-layer').hidden = false; render();
+      $('#calendar-time').value = time || ''; timeSummary(); $('#calendar-layer').hidden = false; render();
     }, close
   };
   $('#previous-month').addEventListener('click', () => { month--; if (month < 0) { year--; month = 11; } render(); });
   $('#next-month').addEventListener('click', () => { month++; if (month > 11) { year++; month = 0; } render(); });
   $('#calendar-cancel').addEventListener('click', close);
   $('#calendar-confirm').addEventListener('click', () => { callback(selected, $('#calendar-time').value); close(); });
-  $('#clear-time').addEventListener('click', () => { $('#calendar-time').value = ''; });
+  $('#open-time').addEventListener('click', () => window.FufuTime.open($('#calendar-time').value, time => { $('#calendar-time').value = time; timeSummary(); }));
   $('#calendar-layer').addEventListener('click', e => { if (e.target === $('#calendar-layer')) close(); });
 })();
