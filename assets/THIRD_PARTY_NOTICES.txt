@@ -1,4 +1,4 @@
-夫夫清单 1.0.5
+夫夫清单 1.0.6
 
 Task CRUD adapted from OmerShubi/priority-matrix (MIT).
 https://github.com/OmerShubi/priority-matrix

@@ -7,6 +7,7 @@
   const native = window.NativeBridge;
   const key = 'fufu-list.v1';
   let currentView = localStorage.getItem(key + '.view') === 'timeline' ? 'timeline' : 'matrix';
+  let activeQuadrant = 0, matrixScroll = [];
   let state, draft = null, importing = false, readingFailed = false, preview = [], previewIndex = 0, revealed = null, renderedDay = '';
   const imageURL = file => file.startsWith('data:') ? file : 'https://fufu.local/images/' + encodeURIComponent(file);
   const today = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
@@ -132,29 +133,51 @@
   $('#mode-layer').addEventListener('click', e => { if (e.target === $('#mode-layer')) closeModes(); });
   document.querySelectorAll('.view-option').forEach(button => button.addEventListener('click', () => { currentView = button.dataset.view; localStorage.setItem(key + '.view', currentView); closeModes(); render(); }));
   $('#new-task').addEventListener('click', () => openEditor(1));
+  function openQuadrant(q) {
+    matrixScroll = Array.from($('#board').querySelectorAll('.quad-body')).map(body => body.scrollTop);
+    activeQuadrant = q; closeModes(); render();
+    $('#board .quad-body').scrollTop = 0; $('#quadrant-back').focus();
+  }
+  function closeQuadrant() {
+    if (!activeQuadrant) return false;
+    const q = activeQuadrant; activeQuadrant = 0; render();
+    $('#board').querySelectorAll('.quad-body').forEach((body, i) => { body.scrollTop = matrixScroll[i] || 0; });
+    $('.quad[data-quadrant="' + q + '"] .quad-open').focus();
+    return true;
+  }
   function render() {
     renderedDay = today();
     closeSwipe();
     const board = $('#board'), scroll = Array.from(board.querySelectorAll('.quad-body')).map(body => body.scrollTop); board.replaceChildren();
     const timelineScroll = $('#timeline').scrollTop;
+    $('#app').classList.toggle('quadrant-view', !!activeQuadrant); board.classList.toggle('expanded', !!activeQuadrant);
     board.hidden = currentView !== 'matrix'; $('#timeline').hidden = currentView !== 'timeline';
     $('#view-title').textContent = currentView === 'matrix' ? '四象限模式' : '时间轴模式'; $('#new-task').disabled = readingFailed;
     if (currentView === 'matrix') {
     $('#timeline').replaceChildren();
     names.forEach((name, i) => {
+      if (activeQuadrant && activeQuadrant !== i + 1) return;
       const q = i + 1, quad = document.createElement('section'); quad.className = 'quad q' + q; quad.dataset.quadrant = q;
       const heading = document.createElement('header'); heading.className = 'quad-heading';
       const symbol = document.createElement('span'); symbol.className = 'quadrant-symbol'; symbol.setAttribute('aria-hidden', 'true');
       for (let j = 0; j < 4; j++) { const dot = document.createElement('i'); if (j === i) dot.className = 'active'; symbol.appendChild(dot); }
       const title = document.createElement('h2'); title.textContent = name;
       const add = document.createElement('button'); add.className = 'add-button'; add.textContent = '＋'; add.setAttribute('aria-label', '添加' + name + '待办'); add.disabled = readingFailed;
-      add.addEventListener('click', () => openEditor(q)); heading.append(symbol, title, add);
+      add.addEventListener('click', e => { e.stopPropagation(); openEditor(q); });
+      const label = document.createElement(activeQuadrant ? 'div' : 'button'); label.className = 'quad-open'; label.append(symbol, title);
+      if (activeQuadrant) {
+        const back = document.createElement('button'); back.id = 'quadrant-back'; back.type = 'button'; back.className = 'quadrant-back'; back.textContent = '‹'; back.setAttribute('aria-label', '返回四象限'); back.addEventListener('click', closeQuadrant);
+        heading.append(back, label, add);
+      } else {
+        label.type = 'button'; label.setAttribute('aria-label', '全屏查看' + name);
+        heading.append(label, add); heading.addEventListener('click', () => openQuadrant(q));
+      }
       const body = document.createElement('div'); body.className = 'quad-body';
       const tasks = C.listQuadrant(state, q);
       if (!tasks.length) { const empty = document.createElement('div'); empty.className = 'empty'; empty.textContent = '暂无待办'; const help = document.createElement('small'); help.textContent = '点右上角 ＋ 添加'; empty.appendChild(help); body.appendChild(empty); }
       tasks.forEach(t => body.appendChild(taskRow(t)));
       quad.append(heading, body); board.appendChild(quad);
-      body.scrollTop = scroll[i] || 0;
+      body.scrollTop = scroll[activeQuadrant ? 0 : i] || 0;
     });
     } else { renderTimeline(); $('#timeline').scrollTop = timelineScroll; }
     const count = state.tasks.filter(t => !t.done).length;
@@ -162,8 +185,9 @@
     resizeTaskRows();
   }
   function resizeTaskRows() {
+    if (activeQuadrant) return;
     const body = $('#board .quad-body');
-    if (body && body.clientHeight) $('#board').style.setProperty('--task-row-height', Math.max(innerWidth >= 600 ? 84 : 76, body.clientHeight / 3.5) + 'px');
+    if (body && body.clientHeight) $('#board').style.setProperty('--task-row-height', Math.max(innerWidth >= 600 ? 76 : 68, body.clientHeight / 3.5) + 'px');
   }
   function rememberDraft() {
     if (draft) localStorage.setItem(key + '.draft', JSON.stringify({...draft, text: $('#task-text').value, quadrant: Number($('#task-quadrant').value), due: $('#task-due').value}));
@@ -300,7 +324,7 @@
   $('#image-surface').addEventListener('touchstart', e => { if (e.touches.length === 2) gesture = {distance: distance(e.touches), scale}; else gesture = {x: e.touches[0].clientX, y: e.touches[0].clientY, translateX, translateY}; }, {passive: true});
   $('#image-surface').addEventListener('touchmove', e => { e.preventDefault(); if (!gesture) return; if (e.touches.length === 2 && gesture.distance) scale = Math.min(5, Math.max(1, gesture.scale * distance(e.touches) / gesture.distance)); else if (e.touches.length === 1 && gesture.x !== undefined && scale > 1) { translateX = gesture.translateX + e.touches[0].clientX - gesture.x; translateY = gesture.translateY + e.touches[0].clientY - gesture.y; } transform(); }, {passive: false});
   $('#image-surface').addEventListener('touchend', () => { gesture = null; });
-  window.handleBack = function () { if (!$('#image-viewer').hidden) { closeViewer(); return true; } if (window.FufuTime.close()) return true; if (closeModes()) return true; if (closePriority()) return true; if (window.FufuCalendar.close()) return true; if (revealed) { closeSwipe(); return true; } if (draft) { closeEditor(); return true; } return false; };
+  window.handleBack = function () { if (!$('#image-viewer').hidden) { closeViewer(); return true; } if (window.FufuTime.close()) return true; if (closeModes()) return true; if (closePriority()) return true; if (window.FufuCalendar.close()) return true; if (revealed) { closeSwipe(); return true; } if (draft) { closeEditor(); return true; } return closeQuadrant(); };
   document.addEventListener('keydown', e => { if (e.key === 'Escape') window.handleBack(); });
   document.addEventListener('visibilitychange', () => { if (!document.hidden) render(); });
   setInterval(() => { if (document.hidden) return; if (renderedDay !== today()) { render(); return; } state.tasks.forEach(task => document.querySelectorAll('.task[data-id="' + task.id + '"] .due').forEach(element => updateDue(element, task))); }, 60000);
